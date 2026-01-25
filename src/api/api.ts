@@ -66,7 +66,7 @@ export const apiCall = async (
   endpoint: string,
   body?: unknown
 ): Promise<Response> => {
-  const url = `http://localhost:5000${endpoint}`;
+  const url = `https://hot-takes-backend-tcxr.onrender.com${endpoint}`;
   const options: RequestInit = {
     method,
     headers: getAuthHeaders(),
