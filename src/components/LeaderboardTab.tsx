@@ -2,6 +2,43 @@ import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getLeaderboard, type LeaderboardOpinion } from '../api/api';
 
+/** Format ISO date to "Today @ 7:12pm", "Yesterday @ 3:12pm", or "1/22/26 @ 5:16pm" */
+const formatDate = (isoString: string) => {
+  const date = new Date(isoString);
+  const now = new Date();
+
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate();
+
+  const options: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  };
+  const timeString = date.toLocaleTimeString(undefined, options);
+
+  if (isToday) return `Today @ ${timeString}`;
+  if (isYesterday) return `Yesterday @ ${timeString}`;
+
+  // Fallback to short date for older dates
+  const dateString = date.toLocaleDateString(undefined, {
+    month: 'numeric',
+    day: 'numeric',
+    year: '2-digit',
+  });
+
+  return `${dateString} @ ${timeString}`;
+};
+
 export function LeaderboardTab() {
   const [opinions, setOpinions] = useState<LeaderboardOpinion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,8 +49,6 @@ export function LeaderboardTab() {
     try {
       setLoading(true);
       setError('');
-
-      // Fetch leaderboard from backend API
       const opinions = await getLeaderboard(10, 'top');
       setOpinions(opinions);
     } catch (err) {
@@ -29,11 +64,8 @@ export function LeaderboardTab() {
   }, []);
 
   const sortedOpinions = [...opinions].sort((a, b) => {
-    if (sortType === 'votes') {
-      return b.voteCount - a.voteCount;
-    } else {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
+    if (sortType === 'votes') return b.voteCount - a.voteCount;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return (
@@ -85,7 +117,6 @@ export function LeaderboardTab() {
                 key={opinion.id}
                 className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition border-l-4 border-blue-500"
               >
-                {/* Rank Badge */}
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
@@ -93,13 +124,12 @@ export function LeaderboardTab() {
                     </div>
                   </div>
 
-                  {/* Opinion Content */}
                   <div className="flex-1">
                     <p className="text-gray-900 font-medium leading-relaxed mb-2">
                       {opinion.content}
                     </p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{opinion.createdAt}</span>
+                      <span>{formatDate(opinion.createdAt)}</span>
                       <span className="font-bold text-blue-600">
                         {opinion.voteCount} votes
                       </span>
