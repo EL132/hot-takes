@@ -23,20 +23,19 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
   const { userId, username, lifetimeVotes, opinionCount, opinionIds, location } = useUser();
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
   const [opinions, setOpinions] = useState<OpinionDetails[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !userId) return;
 
     const fetchProfile = async () => {
       try {
-        setLoading(true);
+        // setLoading(true); (removed)
         const profile = await getUserProfile(userId);
         setUserProfile(profile);
       } catch (err) {
         console.error('Failed to fetch user profile:', err);
       } finally {
-        setLoading(false);
+        // setLoading(false); (removed)
       }
     };
 
@@ -52,7 +51,7 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
     }
 
     let cancelled = false;
-    setLoading(true);
+    // setLoading(true); (removed)
 
     Promise.all(
       ids.map(async (id: string) => {
@@ -72,7 +71,7 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
     ).then(results => {
       if (!cancelled) {
         setOpinions(results.filter(Boolean) as OpinionDetails[]);
-        setLoading(false);
+        // setLoading(false); (removed)
       }
     });
 
