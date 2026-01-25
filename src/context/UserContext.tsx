@@ -11,6 +11,7 @@ export interface UserContextType {
   setUserId: (userId: string | null) => void;
   interactions: VoteInteraction[];
   addInteraction: (interaction: VoteInteraction) => void;
+  updateOrAddInteraction: (interaction: VoteInteraction) => void;
   clearInteractions: () => void;
   sessionStartTime: number | null;
 }
@@ -27,6 +28,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setInteractions((prev) => [...prev, interaction]);
   };
 
+  const updateOrAddInteraction = (interaction: VoteInteraction) => {
+    setInteractions((prev) => {
+      const existingIndex = prev.findIndex((i) => i.opinionId === interaction.opinionId);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = interaction;
+        return updated;
+      }
+      return [...prev, interaction];
+    });
+  };
+
   const clearInteractions = () => {
     setInteractions([]);
   };
@@ -38,6 +51,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserId,
         interactions,
         addInteraction,
+        updateOrAddInteraction,
         clearInteractions,
         sessionStartTime,
       }}

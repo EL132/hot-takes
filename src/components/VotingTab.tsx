@@ -41,7 +41,7 @@ const formatDate = (isoString: string) => {
 };
 
 export function VotingTab(): React.ReactElement {
-  const { addInteraction, interactions } = useUser();
+  const { updateOrAddInteraction, interactions, userId } = useUser();
   const [opinion, setOpinion] = useState<Opinion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,7 +55,7 @@ export function VotingTab(): React.ReactElement {
     try {
       setLoading(true);
       setError('');
-      const newOpinion = await getOpinion();
+      const newOpinion = await getOpinion([], userId || undefined);
       setOpinion(newOpinion);
     } catch (err) {
       setError('Failed to load opinion. Please try again.');
@@ -70,13 +70,13 @@ export function VotingTab(): React.ReactElement {
   }, []);
 
   const handleVote = async (voteType: 'upvote' | 'downvote' | 'skip') => {
-    if (!opinion) return;
+    if (!opinion || !userId) return;
 
     // Animate card off screen
     setIsAnimatingOut(true);
 
-    // Record interaction in context
-    addInteraction({
+    // Record interaction in context (or update if they already voted on this opinion)
+    updateOrAddInteraction({
       opinionId: opinion.id,
       voteType,
       timestamp: new Date().toISOString(),
@@ -86,7 +86,7 @@ export function VotingTab(): React.ReactElement {
     if (voteType !== 'skip') {
       try {
         const voteValue = voteType === 'upvote' ? 1 : -1;
-        await voteOnOpinion(opinion.id, voteValue as 1 | -1);
+        await voteOnOpinion(opinion.id, voteValue as 1 | -1, userId);
       } catch (err) {
         console.error('Failed to submit vote:', err);
       }
@@ -186,6 +186,13 @@ export function VotingTab(): React.ReactElement {
               <p className="text-sm text-gray-500">
                 Created: {formatDate(opinion.dateSubmitted)}
               </p>
+              {opinion.userVote !== null && (
+                <div className="mt-4">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${opinion.userVote === 1 ? 'bg-green-500' : 'bg-red-500'}`}>
+                    {opinion.userVote === 1 ? '👍 Your previous vote: Agree' : '👎 Your previous vote: Disagree'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -193,7 +200,8 @@ export function VotingTab(): React.ReactElement {
               {/* Downvote Button (Left) */}
               <button
                 onClick={() => handleVote('downvote')}
-                className="flex flex-col items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-xl transition transform hover:scale-105 active:scale-95"
+                disabled={!userId}
+                className="flex flex-col items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ThumbsDown size={28} />
                 <span className="font-semibold">Disagree</span>
@@ -211,12 +219,18 @@ export function VotingTab(): React.ReactElement {
               {/* Upvote Button (Right) */}
               <button
                 onClick={() => handleVote('upvote')}
-                className="flex flex-col items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-xl transition transform hover:scale-105 active:scale-95"
+                disabled={!userId}
+                className="flex flex-col items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-xl transition transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ThumbsUp size={28} />
                 <span className="font-semibold">Agree</span>
               </button>
             </div>
+            {!userId && (
+              <div className="text-center text-sm text-orange-600 font-medium">
+                ⚠️ Please log in to vote
+              </div>
+            )}
 
             {/* Swipe Instructions */}
             <div className="text-center mb-6 text-gray-600 text-sm">

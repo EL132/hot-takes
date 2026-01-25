@@ -64,8 +64,8 @@ export function LeaderboardTab() {
   }, []);
 
   const sortedOpinions = [...opinions].sort((a, b) => {
-    if (sortType === 'votes') return b.voteCount - a.voteCount;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortType === 'votes') return b.upvotes - a.upvotes;
+    return new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime();
   });
 
   return (
@@ -129,10 +129,14 @@ export function LeaderboardTab() {
                       {opinion.content}
                     </p>
                     <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>{formatDate(opinion.createdAt)}</span>
-                      <span className="font-bold text-blue-600">
-                        {opinion.voteCount} votes
-                      </span>
+                      <span>{formatDate(opinion.dateSubmitted)}</span>
+                      <div className="flex gap-3 items-center">
+                        <span className="text-green-600 font-semibold">👍 {opinion.upvotes}</span>
+                        <span className="text-red-600 font-semibold">👎 {opinion.downvotes}</span>
+                        <span className="font-bold text-blue-600 border-l border-gray-300 pl-3">
+                          {opinion.upvotes - opinion.downvotes > 0 ? '+' : ''}{opinion.upvotes - opinion.downvotes}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -23,15 +23,18 @@ export interface Opinion {
   id: string;
   content: string;
   dateSubmitted: string;
-  authorId: string;
-  voteCount: number;
+  authorId?: string;
+  upvotes: number;
+  downvotes: number;
+  userVote: 1 | -1 | null;
 }
 
 export interface LeaderboardOpinion {
   id: string;
   content: string;
-  voteCount: number;
-  createdAt: string;
+  upvotes: number;
+  downvotes: number;
+  dateSubmitted: string;
 }
 
 /* =======================
@@ -41,7 +44,8 @@ export interface LeaderboardOpinion {
 interface BackendLeaderboardOpinion {
   id: string;
   content: string;
-  voteCount: number;
+  upvotes: number;
+  downvotes: number;
   dateSubmitted: string;
 }
 
@@ -66,7 +70,7 @@ export const apiCall = async (
   endpoint: string,
   body?: unknown
 ): Promise<Response> => {
-  const url = `https://hot-takes-backend-tcxr.onrender.com${endpoint}`;
+  const url = `http://localhost:5000${endpoint}`;
   const options: RequestInit = {
     method,
     headers: getAuthHeaders(),
@@ -127,9 +131,16 @@ export const getCurrentUser = async (): Promise<AuthUser> => {
    Opinions
 ======================= */
 
-export const getOpinion = async (exclude: string[] = []): Promise<Opinion> => {
-  const excludeParam = exclude.length > 0 ? `?exclude=${exclude.join(',')}` : '';
-  const response = await apiCall('GET', `/api/opinions/next${excludeParam}`);
+export const getOpinion = async (exclude: string[] = [], userId?: string): Promise<Opinion> => {
+  const params = new URLSearchParams();
+  if (exclude.length > 0) {
+    params.append('exclude', exclude.join(','));
+  }
+  if (userId) {
+    params.append('userId', userId);
+  }
+  const queryString = params.toString() ? `?${params.toString()}` : '';
+  const response = await apiCall('GET', `/api/opinions/next${queryString}`);
   if (!response.ok) throw new Error('Failed to fetch opinion');
   return response.json();
 };
@@ -143,14 +154,44 @@ export const submitOpinion = async (
   return response.json();
 };
 
+export interface VoteStatus {
+  hasVoted: boolean;
+  voteValue: 1 | -1 | null;
+}
+
+export interface VoteResponse {
+  message: string;
+  opinion: {
+    id: string;
+    content: string;
+    upvotes: number;
+    downvotes: number;
+    userVote: 1 | -1 | null;
+  };
+}
+
 export const voteOnOpinion = async (
   opinionId: string,
-  value: 1 | -1
-): Promise<unknown> => {
+  value: 1 | -1,
+  userId: string
+): Promise<VoteResponse> => {
   const response = await apiCall('POST', `/api/opinions/${opinionId}/vote`, {
     vote: value,
+    userId,
   });
   if (!response.ok) throw new Error('Failed to submit vote');
+  return response.json();
+};
+
+export const checkVoteStatus = async (
+  opinionId: string,
+  userId: string
+): Promise<VoteStatus> => {
+  const response = await apiCall(
+    'GET',
+    `/api/opinions/${opinionId}/vote-status?userId=${encodeURIComponent(userId)}`
+  );
+  if (!response.ok) throw new Error('Failed to check vote status');
   return response.json();
 };
 
@@ -176,12 +217,5 @@ export const getLeaderboard = async (
   }
 
   const data: BackendLeaderboardResponse = await response.json();
-
-  // Normalize backend response to frontend shape
-  return data.opinions.map((opinion) => ({
-    id: opinion.id,
-    content: opinion.content,
-    voteCount: opinion.voteCount,
-    createdAt: opinion.dateSubmitted, // normalized field name
-  }));
+  return data.opinions;
 };
