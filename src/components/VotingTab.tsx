@@ -1,27 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ThumbsUp, ThumbsDown, SkipForward } from 'lucide-react';
+import { voteOnOpinion, getOpinion, type Opinion } from '../api/api';
+import { useUser } from '../context/useUser';
 
-interface Opinion {
-  id: string;
-  content: string;
-  createdAt: string;
-}
-
-interface VoteInteraction {
-  opinionId: string;
-  voteType: 'upvote' | 'downvote' | 'skip';
-  timestamp: string;
-}
-
-interface VotingTabProps {
-  onLogout: () => void;
-}
-
-export function VotingTab({ onLogout }: VotingTabProps) {
+export function VotingTab(): React.ReactElement {
+  const { addInteraction, interactions } = useUser();
   const [opinion, setOpinion] = useState<Opinion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [interactions, setInteractions] = useState<VoteInteraction[]>([]);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const SWIPE_THRESHOLD = 100;
@@ -30,15 +16,7 @@ export function VotingTab({ onLogout }: VotingTabProps) {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch('https://api.chucknorris.io/jokes/random');
-      if (!response.ok) throw new Error('Failed to fetch opinion');
-
-      const data = await response.json();
-      const newOpinion: Opinion = {
-        id: data.id,
-        content: data.value,
-        createdAt: new Date().toLocaleString(),
-      };
+      const newOpinion = await getOpinion();
       setOpinion(newOpinion);
     } catch (err) {
       setError('Failed to load opinion. Please try again.');
@@ -55,16 +33,22 @@ export function VotingTab({ onLogout }: VotingTabProps) {
   const handleVote = async (voteType: 'upvote' | 'downvote' | 'skip') => {
     if (!opinion) return;
 
-    // Record interaction in state for future API integration
-    const interaction: VoteInteraction = {
+    // Record interaction in context
+    addInteraction({
       opinionId: opinion.id,
       voteType,
       timestamp: new Date().toISOString(),
-    };
-    setInteractions((prev) => [...prev, interaction]);
+    });
 
-    // TODO: Submit vote to backend API
-    // POST /api/votes with { opinionId, userId, value: voteType === 'upvote' ? 1 : -1 }
+    // Submit vote to backend API if not skipping
+    if (voteType !== 'skip') {
+      try {
+        const voteValue = voteType === 'upvote' ? 1 : -1;
+        await voteOnOpinion(opinion.id, voteValue as 1 | -1);
+      } catch (err) {
+        console.error('Failed to submit vote:', err);
+      }
+    }
 
     // Fetch next opinion
     await fetchNewOpinion();

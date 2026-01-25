@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { register } from '../api/api';
+import { setAuthToken } from '../auth';
+import { useUser } from '../context/useUser';
 
 interface RegisterProps {
   onSwitchToLogin: () => void;
@@ -7,6 +10,7 @@ interface RegisterProps {
 }
 
 export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterProps) {
+  const { setUserId } = useUser();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +23,6 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
     setError('');
     setLoading(true);
 
-    // Temporary authentication - any username/email with text succeeds
     if (!username || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       setLoading(false);
@@ -39,12 +42,13 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      // Any valid input automatically succeeds and logs in
+      const { userId, token } = await register(username, email, password);
+      setAuthToken(token);
+      setUserId(userId);
       onRegisterSuccess();
     } catch (err) {
-      setError('Registration failed. Please try again.' + err);
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,27 +1,32 @@
 import { useState } from 'react';
 import { Send, CheckCircle } from 'lucide-react';
+import { submitOpinion } from '../api/api';
+import { useUser } from '../context/useUser';
 
 interface SubmissionTabProps {
   onSubmit?: (opinion: string) => void;
 }
 
 export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
+  const { userId } = useUser();
   const [opinion, setOpinion] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!opinion.trim()) return;
+    console.log("insideeee:");
+    console.log(userId)
 
+    e.preventDefault();
+    if (!opinion.trim() || !userId) return;
+
+    setError('');
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Log to console for now
-      console.log('Opinion submitted:', opinion);
+      console.log("Submitting opinion:", opinion);
+      await submitOpinion(opinion, userId);
 
       // Call optional callback
       if (onSubmit) {
@@ -37,6 +42,8 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
         setSubmitted(false);
       }, 3000);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit opinion';
+      setError(errorMessage);
       console.error('Submission error:', err);
     } finally {
       setLoading(false);
@@ -60,6 +67,13 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
                   Thanks for sharing your take.
                 </p>
               </div>
+            </div>
+          )}
+
+
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
             </div>
           )}
 

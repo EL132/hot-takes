@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
+import { login } from '../api/api';
+import { setAuthToken } from '../auth';
+import { useUser } from '../context/useUser';
 
 interface LoginProps {
   onSwitchToRegister: () => void;
@@ -7,7 +10,8 @@ interface LoginProps {
 }
 
 export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
-  const [email, setEmail] = useState('');
+  const { setUserId } = useUser();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,25 +21,21 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
     setError('');
     setLoading(true);
 
-    // Temporary authentication
-    if (!email || !password) {
+    if (!username || !password) {
       setError('Please fill in all fields');
       setLoading(false);
       return;
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Hard-coded valid user: username "elias", password "password"
-      if (email === 'elias@lind.com' && password === 'password') {
-        onLoginSuccess();
-      } else {
-        setError('Invalid email or password. Try: elias / password');
-      }
+      const { user, token } = await login(username, password);
+      setAuthToken(token);
+      console.log("Logged in userId:", user.id);
+      setUserId(user.id);
+      onLoginSuccess();
     } catch (err) {
-      setError('Login failed. Please try again.' + err);
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -48,23 +48,23 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">hot takes</h1>
-            <p className="text-gray-600 mt-2">Share your hottest opinions</p>
+            <p className="text-gray-600 mt-2">share your hottest opinions</p>
           </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Input */}
+            {/* Username Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                Username
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="your_username"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>

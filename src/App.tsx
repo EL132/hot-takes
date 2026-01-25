@@ -6,12 +6,15 @@ import { LeaderboardTab } from './components/LeaderboardTab';
 import { SubmissionTab } from './components/SubmissionTab';
 import { AppHeader } from './components/AppHeader';
 import { TabBar } from './components/TabBar';
+import { clearAuthToken, clearUserId } from './auth';
+import { useUser } from './context/useUser';
 import './App.css';
 
 type AuthScreen = 'login' | 'register' | 'app';
 type TabType = 'voting' | 'leaderboard' | 'submission';
 
-function App() {
+function AppContent() {
+  const { setUserId, clearInteractions } = useUser();
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
   const [activeTab, setActiveTab] = useState<TabType>('voting');
 
@@ -32,6 +35,10 @@ function App() {
   };
 
   const handleLogout = () => {
+    clearAuthToken();
+    clearUserId();
+    setUserId(null);
+    clearInteractions();
     setAuthScreen('login');
     setActiveTab('voting');
   };
@@ -56,7 +63,7 @@ function App() {
           <AppHeader onLogout={handleLogout} />
           
           {/* Tab Content */}
-          {activeTab === 'voting' && <VotingTab onLogout={handleLogout} />}
+          {activeTab === 'voting' && <VotingTab />}
           {activeTab === 'leaderboard' && <LeaderboardTab />}
           {activeTab === 'submission' && <SubmissionTab />}
 
@@ -65,6 +72,12 @@ function App() {
         </div>
       )}
     </>
+  );
+}
+
+function App() {
+  return (
+      <AppContent />
   );
 }
 

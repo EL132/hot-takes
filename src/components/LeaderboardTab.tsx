@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-
-interface LeaderboardOpinion {
-  id: string;
-  content: string;
-  voteCount: number;
-  createdAt: string;
-}
+import { getLeaderboard, type LeaderboardOpinion } from '../api/api';
 
 export function LeaderboardTab() {
   const [opinions, setOpinions] = useState<LeaderboardOpinion[]>([]);
@@ -19,27 +13,9 @@ export function LeaderboardTab() {
       setLoading(true);
       setError('');
 
-      // Fetch 10 random opinions from Chuck Norris API
-      const promises = Array(10)
-        .fill(null)
-        .map(() =>
-          fetch('https://api.chucknorris.io/jokes/random').then((r) => r.json())
-        );
-
-      const jokes = await Promise.all(promises);
-
-      const leaderboardOpinions: LeaderboardOpinion[] = jokes.map((joke) => ({
-        id: joke.id,
-        content: joke.value,
-        voteCount: Math.floor(Math.random() * 500) + 1, // Random votes 1-500
-        createdAt: new Date(
-          Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-        ).toLocaleString(),
-      }));
-
-      // Sort by votes descending
-      leaderboardOpinions.sort((a, b) => b.voteCount - a.voteCount);
-      setOpinions(leaderboardOpinions);
+      // Fetch leaderboard from backend API
+      const opinions = await getLeaderboard(10, 'top');
+      setOpinions(opinions);
     } catch (err) {
       setError('Failed to load leaderboard. Please try again.');
       console.error(err);
