@@ -22,7 +22,7 @@ export interface AuthResponse {
 export interface Opinion {
   id: string;
   content: string;
-  createdAt: string;
+  dateSubmitted: string;
   authorId: string;
   voteCount: number;
 }
