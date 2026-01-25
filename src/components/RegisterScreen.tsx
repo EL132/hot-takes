@@ -10,7 +10,7 @@ interface RegisterProps {
 }
 
 export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterProps) {
-  const { setUserId } = useUser();
+  const { setUserId, setUsername: setContextUsername, setSessionVotes, setLifetimeVotes, setOpinionCount, setOpinionIds } = useUser();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +45,11 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
       const { user, token } = await register(username, email, password);
       setAuthToken(token);
       setUserId(user.id);
+      setContextUsername(user.username || null);
+      setSessionVotes(user.sessionVotes || 0);
+      setLifetimeVotes(user.lifetimeVotes || 0);
+      setOpinionCount(user.opinionCount || 0);
+      setOpinionIds(user.opinionIds || []);
       onRegisterSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';

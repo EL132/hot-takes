@@ -10,8 +10,8 @@ interface LoginProps {
 }
 
 export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
-  const { setUserId } = useUser();
-  const [username, setUsername] = useState('');
+  const { setUserId, setUsername, setSessionVotes, setLifetimeVotes, setOpinionCount, setOpinionIds } = useUser();
+  const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,17 +21,24 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
     setError('');
     setLoading(true);
 
-    if (!username || !password) {
+    if (!usernameInput || !password) {
       setError('Please fill in all fields');
       setLoading(false);
       return;
     }
 
     try {
-      const { user, token } = await login(username, password);
+      const { user, token } = await login(usernameInput, password);
       setAuthToken(token);
-      console.log("Logged in userId:", user.id);
+      console.log('Logged in userId:', user.id);
+      console.log(user)
       setUserId(user.id);
+      setUsername(user.username || null);
+      setSessionVotes(user.sessionVotes || 0);
+      setLifetimeVotes(user.lifetimeVotes || 0);
+      console.log(user.lifetimeVotes);
+      setOpinionCount(user.opinionCount || 0);
+      setOpinionIds(user.opinionIds || []);
       onLoginSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
@@ -62,8 +69,8 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
                 <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="your_username"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />

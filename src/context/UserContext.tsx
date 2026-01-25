@@ -9,11 +9,21 @@ export interface VoteInteraction {
 export interface UserContextType {
   userId: string | null;
   setUserId: (userId: string | null) => void;
+  username: string | null;
+  setUsername: (username: string | null) => void;
   interactions: VoteInteraction[];
   addInteraction: (interaction: VoteInteraction) => void;
   updateOrAddInteraction: (interaction: VoteInteraction) => void;
   clearInteractions: () => void;
   sessionStartTime: number | null;
+  sessionVotes: number;
+  setSessionVotes: (votes: number) => void;
+  lifetimeVotes: number;
+  setLifetimeVotes: (votes: number) => void;
+  opinionCount: number;
+  setOpinionCount: (count: number) => void;
+  opinionIds: string[];
+  setOpinionIds: (ids: string[]) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -21,8 +31,13 @@ export const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [interactions, setInteractions] = useState<VoteInteraction[]>([]);
   const [sessionStartTime] = useState<number | null>(() => Date.now());
+  const [sessionVotes, setSessionVotes] = useState(0);
+  const [lifetimeVotes, setLifetimeVotes] = useState(0);
+  const [opinionCount, setOpinionCount] = useState(0);
+  const [opinionIds, setOpinionIds] = useState<string[]>([]);
 
   const addInteraction = (interaction: VoteInteraction) => {
     setInteractions((prev) => [...prev, interaction]);
@@ -49,11 +64,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
       value={{
         userId,
         setUserId,
+        username,
+        setUsername,
         interactions,
         addInteraction,
         updateOrAddInteraction,
         clearInteractions,
         sessionStartTime,
+        sessionVotes,
+        setSessionVotes,
+        lifetimeVotes,
+        setLifetimeVotes,
+        opinionCount,
+        setOpinionCount,
+        opinionIds,
+        setOpinionIds,
       }}
     >
       {children}

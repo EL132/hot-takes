@@ -12,6 +12,10 @@ export interface AuthUser {
   id: string;
   username: string;
   email: string;
+  sessionVotes?: number;
+  lifetimeVotes?: number;
+  opinionCount?: number;
+  opinionIds?: string[];
 }
 
 export interface AuthResponse {
@@ -127,6 +131,18 @@ export const getCurrentUser = async (): Promise<AuthUser> => {
   return response.json();
 };
 
+export const getUserProfile = async (userId: string): Promise<AuthUser> => {
+  const response = await apiCall('GET', `/api/auth/user?userId=${encodeURIComponent(userId)}`);
+  if (!response.ok) throw new Error('Failed to get user profile');
+  return response.json();
+};
+
+export const resetSession = async (): Promise<unknown> => {
+  const response = await apiCall('POST', '/api/auth/reset-session');
+  if (!response.ok) throw new Error('Failed to reset session');
+  return response.json();
+};
+
 /* =======================
    Opinions
 ======================= */
@@ -153,6 +169,13 @@ export const submitOpinion = async (
   if (!response.ok) throw new Error('Failed to submit opinion');
   return response.json();
 };
+
+export const getOpinionById = async (opinionId: string): Promise<Opinion> => {
+  const response = await apiCall('GET', `/api/opinions/${opinionId}`);
+  if (!response.ok) throw new Error('Failed to fetch opinion by id');
+  return response.json();
+};
+
 
 export interface VoteStatus {
   hasVoted: boolean;
