@@ -1,3 +1,50 @@
+// Profanity filter using API Ninjas
+export const filterProfanity = async (text: string): Promise<{ censored: string; has_profanity: boolean }> => {
+  const apiKey = import.meta.env.VITE_API_NINJAS_KEY;
+  if (!apiKey) throw new Error('Profanity filter API key not set');
+  const params = new URLSearchParams();
+  params.append('text', text);
+  const response = await fetch(`https://api.api-ninjas.com/v1/profanityfilter?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'X-Api-Key': apiKey,
+    },
+  });
+  if (!response.ok) throw new Error('Profanity filter API error');
+  const data = await response.json();
+  return { censored: data.censored, has_profanity: data.has_profanity };
+};
+// Get leaderboard for user's region
+export const getLeaderboardNearMe = async (
+  region: string,
+  limit: number = 10
+): Promise<LeaderboardOpinion[]> => {
+  if (!region) throw new Error('Region is required');
+  const params = new URLSearchParams();
+  params.append('region', region);
+  params.append('limit', limit.toString());
+
+  const response = await apiCall('GET', `/api/leaderboard/near-me?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch regional leaderboard');
+  }
+  const data: BackendLeaderboardResponse = await response.json();
+  return data.opinions;
+};
+// Location info type for region detection
+export interface LocationInfo {
+  country: string | null;
+  region: string | null;
+  city: string | null;
+  timezone?: string | null;
+}
+
+// Fetch location from backend
+export const getLocation = async (): Promise<LocationInfo> => {
+  const response = await apiCall('GET', '/api/location');
+  if (!response.ok) throw new Error('Failed to fetch location');
+  return response.json();
+};
 /**
  * API utility functions with JWT token authentication
  */
@@ -31,6 +78,11 @@ export interface Opinion {
   upvotes: number;
   downvotes: number;
   userVote: 1 | -1 | null;
+  location?: {
+    region?: string | null;
+    city?: string | null;
+    country?: string | null;
+  };
 }
 
 export interface LeaderboardOpinion {
@@ -163,9 +215,10 @@ export const getOpinion = async (exclude: string[] = [], userId?: string): Promi
 
 export const submitOpinion = async (
   content: string,
-  userId: string
+  userId: string,
+  location?: string
 ): Promise<unknown> => {
-  const response = await apiCall('POST', '/api/opinions', { content, userId });
+  const response = await apiCall('POST', '/api/opinions', { content, userId, location });
   if (!response.ok) throw new Error('Failed to submit opinion');
   return response.json();
 };

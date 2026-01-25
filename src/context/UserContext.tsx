@@ -1,4 +1,5 @@
 import { createContext, useState, type ReactNode } from 'react';
+import type { LocationInfo } from '../api/api';
 
 export interface VoteInteraction {
   opinionId: string;
@@ -24,6 +25,8 @@ export interface UserContextType {
   setOpinionCount: (count: number) => void;
   opinionIds: string[];
   setOpinionIds: (ids: string[]) => void;
+  location: LocationInfo | null;
+  setLocation: (location: LocationInfo | null) => void;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -38,6 +41,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [lifetimeVotes, setLifetimeVotes] = useState(0);
   const [opinionCount, setOpinionCount] = useState(0);
   const [opinionIds, setOpinionIds] = useState<string[]>([]);
+  const [location, setLocation] = useState<LocationInfo | null>(null);
 
   const addInteraction = (interaction: VoteInteraction) => {
     setInteractions((prev) => [...prev, interaction]);
@@ -79,6 +83,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setOpinionCount,
         opinionIds,
         setOpinionIds,
+        location,
+        setLocation,
       }}
     >
       {children}

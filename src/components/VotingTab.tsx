@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ThumbsUp, ThumbsDown, SkipForward } from 'lucide-react';
-import { voteOnOpinion, getOpinion, type Opinion } from '../api/api';
+import { voteOnOpinion, getOpinion, getCurrentUser, type Opinion } from '../api/api';
 import { useUser } from '../context/useUser';
 
 /** Format ISO date to "Today @ 7:12pm", "Yesterday @ 3:12pm", or "1/22/26 @ 5:16pm" */
@@ -41,7 +41,7 @@ const formatDate = (isoString: string) => {
 };
 
 export function VotingTab(): React.ReactElement {
-  const { updateOrAddInteraction, interactions, userId } = useUser();
+  const { updateOrAddInteraction, interactions, userId, setLifetimeVotes, setSessionVotes, setOpinionCount, setOpinionIds } = useUser();
   const [opinion, setOpinion] = useState<Opinion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,7 +51,7 @@ export function VotingTab(): React.ReactElement {
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const SWIPE_THRESHOLD = 100;
 
-  const fetchNewOpinion = async () => {
+  const fetchNewOpinion = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -63,11 +63,11 @@ export function VotingTab(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchNewOpinion();
-  }, []);
+  }, [fetchNewOpinion]);
 
   const handleVote = async (voteType: 'upvote' | 'downvote' | 'skip') => {
     if (!opinion || !userId) return;
@@ -87,6 +87,16 @@ export function VotingTab(): React.ReactElement {
       try {
         const voteValue = voteType === 'upvote' ? 1 : -1;
         await voteOnOpinion(opinion.id, voteValue as 1 | -1, userId);
+        // Update user stats after voting
+        try {
+          const user = await getCurrentUser();
+          setLifetimeVotes(user.lifetimeVotes || 0);
+          setSessionVotes(user.sessionVotes || 0);
+          setOpinionCount(user.opinionCount || 0);
+          setOpinionIds(user.opinionIds || []);
+        } catch {
+          // ignore
+        }
       } catch (err) {
         console.error('Failed to submit vote:', err);
       }
@@ -183,6 +193,12 @@ export function VotingTab(): React.ReactElement {
               <p className="text-2xl font-semibold text-gray-900 mb-4 leading-relaxed">
                 {opinion.content}
               </p>
+              {/* Location display */}
+              {opinion.location && (
+                <p className="text-sm text-blue-600 font-medium mb-1">
+                  {`📍 ${opinion.location}`}
+                </p>
+              )}
               <p className="text-sm text-gray-500">
                 Created: {formatDate(opinion.dateSubmitted)}
               </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { getLeaderboard, type LeaderboardOpinion } from '../api/api';
+import { getLeaderboardNearMe, type LeaderboardOpinion } from '../api/api';
+import { useUser } from '../context/useUser';
 
 /** Format ISO date to "Today @ 7:12pm", "Yesterday @ 3:12pm", or "1/22/26 @ 5:16pm" */
 const formatDate = (isoString: string) => {
@@ -39,17 +40,32 @@ const formatDate = (isoString: string) => {
   return `${dateString} @ ${timeString}`;
 };
 
+
+
 export function LeaderboardTab() {
+  const { location } = useUser();
   const [opinions, setOpinions] = useState<LeaderboardOpinion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sortType, setSortType] = useState<'votes' | 'newest'>('votes');
+  const [sortType, setSortType] = useState<'votes' | 'newest' | 'near-me'>('votes');
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (type: 'votes' | 'newest' | 'near-me') => {
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      setError('');
-      const opinions = await getLeaderboard(10, 'top');
+      let opinions: LeaderboardOpinion[] = [];
+      if (type === 'near-me') {
+        if (!location?.region) {
+          setError('Region not detected. Please allow location or try again later.');
+          setLoading(false);
+          return;
+        }
+        opinions = await getLeaderboardNearMe(location.region, 10);
+      } else {
+        // fallback to top/newest
+        const { getLeaderboard } = await import('../api/api');
+        opinions = await getLeaderboard(10, type === 'votes' ? 'top' : 'new');
+      }
       setOpinions(opinions);
     } catch (err) {
       setError('Failed to load leaderboard. Please try again.');
@@ -60,8 +76,10 @@ export function LeaderboardTab() {
   };
 
   useEffect(() => {
-    fetchLeaderboard();
-  }, []);
+    fetchLeaderboard(sortType);
+    // Only re-fetch if region or sortType changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortType, location?.region]);
 
   const sortedOpinions = [...opinions].sort((a, b) => {
     if (sortType === 'votes') return b.upvotes - a.upvotes;
@@ -76,11 +94,12 @@ export function LeaderboardTab() {
         <div className="relative w-full max-w-xs">
           <select
             value={sortType}
-            onChange={(e) => setSortType(e.target.value as 'votes' | 'newest')}
+            onChange={(e) => setSortType(e.target.value as 'votes' | 'newest' | 'near-me')}
             className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             <option value="votes">🔥 Top Votes</option>
             <option value="newest">🆕 Newest</option>
+            <option value="near-me">📍 Hottest takes near me</option>
           </select>
           <ChevronDown
             size={20}

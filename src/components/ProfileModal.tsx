@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useUser } from '../context/useUser';
-import { getUserProfile, getOpinionById } from '../api/api'; // <-- import getOpinion
+import { getUserProfile, getOpinionById } from '../api/api';
 import type { AuthUser } from '../api/api';
 
 interface ProfileModalProps {
@@ -19,7 +20,7 @@ interface OpinionDetails {
 }
 
 export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
-  const { userId, username, lifetimeVotes, opinionCount, opinionIds } = useUser();
+  const { userId, username, lifetimeVotes, opinionCount, opinionIds, location } = useUser();
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
@@ -55,27 +56,26 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
     setLoading(true);
 
     Promise.all(
-        ids.map(async (id: string) => {
-            try {
-            const opinion = await getOpinionById(id);
-            return {
-                id: opinion.id,
-                content: opinion.content,
-                upvotes: opinion.upvotes,
-                downvotes: opinion.downvotes,
-                dateSubmitted: opinion.dateSubmitted,
-            };
-            } catch {
-            return null;
-            }
-        })
-        ).then(results => {
-        if (!cancelled) {
-            setOpinions(results.filter(Boolean) as OpinionDetails[]);
-            setLoading(false);
+      ids.map(async (id: string) => {
+        try {
+          const opinion = await getOpinionById(id);
+          return {
+            id: opinion.id,
+            content: opinion.content,
+            upvotes: opinion.upvotes,
+            downvotes: opinion.downvotes,
+            dateSubmitted: opinion.dateSubmitted,
+          };
+        } catch {
+          return null;
         }
+      })
+    ).then(results => {
+      if (!cancelled) {
+        setOpinions(results.filter(Boolean) as OpinionDetails[]);
+        setLoading(false);
+      }
     });
-
 
     return () => {
       cancelled = true;
@@ -103,9 +103,21 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* User Info */}
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Username</p>
-            <p className="text-xl font-bold text-gray-900">{username || 'User'}</p>
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 space-y-2">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Username</p>
+              <p className="text-xl font-bold text-gray-900">{username || 'User'}</p>
+            </div>
+            {location && (
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-xs text-gray-600">Region</p>
+                <p className="text-sm font-semibold text-blue-700">
+                  {location.city
+                    ? `${location.city}, ${location.region}`
+                    : location.region || location.country}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Lifetime Stats */}
@@ -159,5 +171,6 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
         </div>
       </div>
     </div>
+
   );
 }

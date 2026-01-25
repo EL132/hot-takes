@@ -1,36 +1,52 @@
 import { useState } from 'react';
 import { Send, CheckCircle } from 'lucide-react';
-import { submitOpinion } from '../api/api';
+import { submitOpinion, getCurrentUser, filterProfanity } from '../api/api';
 import { useUser } from '../context/useUser';
+
 
 interface SubmissionTabProps {
   onSubmit?: (opinion: string) => void;
 }
 
 export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
-  const { userId } = useUser();
+  const { userId, location, setLifetimeVotes, setSessionVotes, setOpinionCount, setOpinionIds } = useUser();
   const [opinion, setOpinion] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log("insideeee:");
-    console.log(userId)
-
     e.preventDefault();
-    if (!opinion.trim() || !userId) return;
+    if (!opinion.trim() || !userId || !location) return;
 
     setError('');
     setLoading(true);
 
     try {
-      console.log("Submitting opinion:", opinion);
-      await submitOpinion(opinion, userId);
+      // Profanity filter
+      const { censored, has_profanity } = await filterProfanity(opinion);
+      if (has_profanity) {
+        setError('Your opinion contains inappropriate language. Please revise and try again.');
+        setLoading(false);
+        return;
+      }
+
+      await submitOpinion(censored, userId, location.region || null);
+
+      // Update user stats after submission
+      try {
+        const user = await getCurrentUser();
+        setLifetimeVotes(user.lifetimeVotes || 0);
+        setSessionVotes(user.sessionVotes || 0);
+        setOpinionCount(user.opinionCount || 0);
+        setOpinionIds(user.opinionIds || []);
+      } catch {
+        // ignore
+      }
 
       // Call optional callback
       if (onSubmit) {
-        onSubmit(opinion);
+        onSubmit(censored);
       }
 
       // Show success message
@@ -70,7 +86,6 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
             </div>
           )}
 
-
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
@@ -95,7 +110,7 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
               {/* Character Count */}
               <div className="text-right text-sm mt-2">
                 <span
-                  className={`${
+                  className={`$
                     characterCount > maxCharacters * 0.9
                       ? 'text-orange-600 font-semibold'
                       : 'text-gray-500'
@@ -106,10 +121,20 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
               </div>
             </div>
 
+            {/* Location Info */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Region (auto-detected)
+              </label>
+              <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-700">
+                {location?.region || location?.country || 'Detecting region...'}
+              </div>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={!opinion.trim() || loading}
+              disabled={!opinion.trim() || !location || loading}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Send size={20} />

@@ -1,16 +1,12 @@
 import { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
-import { login } from '../api/api';
+import { login, getLocation } from '../api/api';
 import { setAuthToken } from '../auth';
 import { useUser } from '../context/useUser';
 
-interface LoginProps {
-  onSwitchToRegister: () => void;
-  onLoginSuccess: () => void;
-}
 
 export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) {
-  const { setUserId, setUsername, setSessionVotes, setLifetimeVotes, setOpinionCount, setOpinionIds } = useUser();
+  const { setUserId, setUsername, setSessionVotes, setLifetimeVotes, setOpinionCount, setOpinionIds, setLocation } = useUser();
   const [usernameInput, setUsernameInput] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,15 +26,21 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
     try {
       const { user, token } = await login(usernameInput, password);
       setAuthToken(token);
-      console.log('Logged in userId:', user.id);
-      console.log(user)
       setUserId(user.id);
       setUsername(user.username || null);
       setSessionVotes(user.sessionVotes || 0);
       setLifetimeVotes(user.lifetimeVotes || 0);
-      console.log(user.lifetimeVotes);
       setOpinionCount(user.opinionCount || 0);
       setOpinionIds(user.opinionIds || []);
+
+      // Fetch location once per session
+      try {
+        const location = await getLocation();
+        setLocation(location);
+      } catch {
+        setLocation(null);
+      }
+
       onLoginSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
@@ -105,23 +107,13 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? 'Logging in...' : 'Log In'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">New to hot takes?</span>
-            </div>
-          </div>
-
-          {/* Register Link */}
+          {/* Switch to Register */}
           <button
             type="button"
             onClick={onSwitchToRegister}
