@@ -35,6 +35,21 @@ export interface LeaderboardOpinion {
 }
 
 /* =======================
+   Backend Response Types
+======================= */
+
+interface BackendLeaderboardOpinion {
+  id: string;
+  content: string;
+  voteCount: number;
+  dateSubmitted: string;
+}
+
+interface BackendLeaderboardResponse {
+  opinions: BackendLeaderboardOpinion[];
+}
+
+/* =======================
    Helpers
 ======================= */
 
@@ -156,17 +171,17 @@ export const getLeaderboard = async (
     `/api/leaderboard/top?${params.toString()}`
   );
 
-  if (!response.ok) throw new Error('Failed to fetch leaderboard');
-  return response.json();
-};
+  if (!response.ok) {
+    throw new Error('Failed to fetch leaderboard');
+  }
 
-/* =======================
-   Jokes (temporary)
-======================= */
+  const data: BackendLeaderboardResponse = await response.json();
 
-export const getJoke = async (): Promise<{ id: string; content: string }> => {
-  const response = await apiCall('GET', '/api/jokes/random');
-  if (!response.ok) throw new Error('Failed to fetch joke');
-  const data = await response.json();
-  return { id: data.id, content: data.content };
+  // Normalize backend response to frontend shape
+  return data.opinions.map((opinion) => ({
+    id: opinion.id,
+    content: opinion.content,
+    voteCount: opinion.voteCount,
+    createdAt: opinion.dateSubmitted, // normalized field name
+  }));
 };

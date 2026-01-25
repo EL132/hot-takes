@@ -42,9 +42,9 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
     }
 
     try {
-      const { userId, token } = await register(username, email, password);
+      const { user, token } = await register(username, email, password);
       setAuthToken(token);
-      setUserId(userId);
+      setUserId(user.id);
       onRegisterSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
