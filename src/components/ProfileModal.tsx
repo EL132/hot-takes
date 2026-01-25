@@ -23,6 +23,7 @@ export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
   const { userId, username, lifetimeVotes, opinionCount, opinionIds, location } = useUser();
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
   const [opinions, setOpinions] = useState<OpinionDetails[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !userId) return;
