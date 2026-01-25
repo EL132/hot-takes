@@ -31,7 +31,7 @@ export function SubmissionTab({ onSubmit }: SubmissionTabProps) {
         return;
       }
 
-      await submitOpinion(censored, userId, location.region || null);
+      await submitOpinion(censored, userId, location.region || undefined);
 
       // Update user stats after submission
       try {

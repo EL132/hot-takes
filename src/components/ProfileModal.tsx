@@ -22,8 +22,6 @@ interface OpinionDetails {
 export function ProfileModal({ isOpen, onClose, onLogout }: ProfileModalProps) {
   const { userId, username, lifetimeVotes, opinionCount, opinionIds, location } = useUser();
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [loading, setLoading] = useState(false);
   const [opinions, setOpinions] = useState<OpinionDetails[]>([]);
 
   useEffect(() => {

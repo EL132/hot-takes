@@ -1,3 +1,8 @@
+
+interface LoginProps {
+  onSwitchToRegister: () => void;
+  onLoginSuccess: () => void;
+}
 import { useState } from 'react';
 import { Mail, Lock } from 'lucide-react';
 import { login, getLocation } from '../api/api';
