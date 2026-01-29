@@ -60,7 +60,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center p-4">
       <div className="w-full">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-auto">
           {/* Header */}
@@ -90,7 +90,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="your_username"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -141,7 +141,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -157,7 +157,7 @@ export function RegisterScreen({ onSwitchToLogin, onRegisterSuccess }: RegisterP
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-2 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating Account...' : 'Sign Up'}
             </button>
