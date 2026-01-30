@@ -56,7 +56,7 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center p-4">
       <div className="w-full">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-auto">
           {/* Header */}
@@ -79,7 +79,7 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="your_username"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -96,7 +96,7 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                 />
               </div>
             </div>
@@ -112,7 +112,7 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? 'Logging in...' : 'Log In'}
             </button>
@@ -122,7 +122,7 @@ export function LoginScreen({ onSwitchToRegister, onLoginSuccess }: LoginProps) 
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="w-full border-2 border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:border-blue-500 hover:text-blue-500 transition"
+            className="w-full border-2 border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:border-red-500 hover:text-red-500 transition"
           >
             Create Account
           </button>
