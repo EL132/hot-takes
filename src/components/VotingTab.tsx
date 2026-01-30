@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ThumbsUp, ThumbsDown, SkipForward } from 'lucide-react';
 import { voteOnOpinion, getOpinion, getCurrentUser, type Opinion } from '../api/api';
 import { useUser } from '../context/useUser';
@@ -45,10 +45,10 @@ export function VotingTab(): React.ReactElement {
   const [opinion, setOpinion] = useState<Opinion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const touchStartRef = useRef<number | null>(null);
   const [swipeDelta, setSwipeDelta] = useState(0);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const [exitVoteType, setExitVoteType] = useState<'upvote' | 'downvote' | 'skip' | null>(null);
   const SWIPE_THRESHOLD = 100;
 
   const fetchNewOpinion = useCallback(async () => {
@@ -69,10 +69,33 @@ export function VotingTab(): React.ReactElement {
     fetchNewOpinion();
   }, [fetchNewOpinion]);
 
+  // Keyboard shortcuts: ← disagree, → agree, S skip (only when a card is visible and not animating)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!opinion || loading || isAnimatingOut) return;
+      const target = e.target as HTMLElement;
+      if (target.closest('input, textarea, select')) return;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleVote('downvote');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleVote('upvote');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        handleVote('skip');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [opinion, loading, isAnimatingOut]);
+
   const handleVote = async (voteType: 'upvote' | 'downvote' | 'skip') => {
     if (!opinion || !userId) return;
 
-    // Animate card off screen
+    // Animate card off screen in direction based on vote type
+    setExitVoteType(voteType);
     setIsAnimatingOut(true);
 
     // Record interaction in context (or update if they already voted on this opinion)
@@ -105,32 +128,34 @@ export function VotingTab(): React.ReactElement {
     // Wait for animation to complete before fetching next opinion
     setTimeout(() => {
       setIsAnimatingOut(false);
+      setExitVoteType(null);
       setSwipeDelta(0);
       fetchNewOpinion();
     }, 300);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    touchStartRef.current = e.targetTouches[0].clientX;
     setSwipeDelta(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart) return;
+    const startX = touchStartRef.current;
+    if (startX === null) return;
     const currentX = e.targetTouches[0].clientX;
-    const delta = currentX - touchStart;
-    setSwipeDelta(delta);
+    setSwipeDelta(currentX - startX);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    setTouchEnd(e.changedTouches[0].clientX);
-    handleSwipe();
+    const endX = e.changedTouches[0].clientX;
+    const startX = touchStartRef.current;
+    handleSwipe(startX, endX);
   };
 
-  const handleSwipe = () => {
-    if (!touchStart || !touchEnd) return;
+  const handleSwipe = (startX: number | null, endX: number) => {
+    if (startX === null) return;
 
-    const distance = touchStart - touchEnd;
+    const distance = startX - endX;
     const isLeftSwipe = distance > SWIPE_THRESHOLD;
     const isRightSwipe = distance < -SWIPE_THRESHOLD;
 
@@ -143,8 +168,7 @@ export function VotingTab(): React.ReactElement {
       setSwipeDelta(0);
     }
 
-    setTouchStart(null);
-    setTouchEnd(null);
+    touchStartRef.current = null;
   };
 
   return (
@@ -174,7 +198,8 @@ export function VotingTab(): React.ReactElement {
 
         {opinion && !loading && (
           <div
-            className="w-full max-w-2xl"
+            className="w-full max-w-2xl touch-none"
+            style={{ touchAction: 'none' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -183,9 +208,22 @@ export function VotingTab(): React.ReactElement {
             <div
               className="bg-white rounded-2xl shadow-2xl p-8 min-h-96 flex flex-col justify-center items-center text-center mb-8 cursor-grab active:cursor-grabbing select-none"
               style={{
-                transform: isAnimatingOut
-                  ? `translateX(${swipeDelta > 0 ? 500 : -500}px) rotateZ(${swipeDelta > 0 ? 20 : -20}deg) opacity(0)`
-                  : `translateX(${swipeDelta}px) rotateZ(${swipeDelta * 0.1}deg)`,
+                transform: (() => {
+                  if (!isAnimatingOut) {
+                    return `translateX(${swipeDelta}px) rotateZ(${swipeDelta * 0.1}deg)`;
+                  }
+                  if (exitVoteType === 'downvote') {
+                    return 'translateX(-500px) rotateZ(-20deg)';
+                  }
+                  if (exitVoteType === 'upvote') {
+                    return 'translateX(500px) rotateZ(20deg)';
+                  }
+                  if (exitVoteType === 'skip') {
+                    return 'translateY(-120px) scale(0.96)';
+                  }
+                  return `translateX(${swipeDelta}px) rotateZ(${swipeDelta * 0.1}deg)`;
+                })(),
+                opacity: isAnimatingOut ? 0 : 1,
                 transition: isAnimatingOut ? 'all 0.3s ease-out' : 'none',
                 transformOrigin: 'center',
               }}
@@ -248,9 +286,10 @@ export function VotingTab(): React.ReactElement {
               </div>
             )}
 
-            {/* Swipe Instructions */}
-            <div className="text-center mb-6 text-gray-600 text-sm">
+            {/* Swipe & keyboard hints */}
+            <div className="text-center mb-6 text-gray-600 text-sm space-y-1">
               <p>💡 Swipe left to disagree, right to agree, or use buttons below</p>
+              <p className="text-gray-500">⌨️ <kbd className="px-1.5 py-0.5 rounded bg-gray-200 font-mono text-xs">←</kbd> Disagree · <kbd className="px-1.5 py-0.5 rounded bg-gray-200 font-mono text-xs">→</kbd> Agree · <kbd className="px-1.5 py-0.5 rounded bg-gray-200 font-mono text-xs">↑</kbd> Skip</p>
             </div>
           </div>
         )}
